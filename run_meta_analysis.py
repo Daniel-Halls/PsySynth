@@ -13,8 +13,8 @@ def load_brain_mask():
     """Loads standard MNI152 brain mask and returns shape, affine, and data."""
     # Preferred path and fallback options
     mask_paths = [
-        "/Users/mszdjh3/fsl/data/standard/MNI152_T1_2mm_brain_mask.nii.gz",
-        "/Users/mszdjh3/fsl/pkgs/fsl-data_standard-2208.0-0/data/standard/MNI152_T1_2mm_brain_mask.nii.gz"
+        f"{os.environ['FSLDIR']}/data/standard/MNI152_T1_2mm_brain_mask.nii.gz",
+        f"{os.environ['FSLDIR']}/pkgs/fsl-data_standard-2208.0-0/data/standard/MNI152_T1_2mm_brain_mask.nii.gz"
     ]
     
     mask_img = None
