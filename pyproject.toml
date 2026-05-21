@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "psysynth"
+version = "0.1.0"
+description = "Automated neuroimaging meta-analysis pipeline"
+authors = [
+    {name = "PsySynth Contributors"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.11.0",
+    "lxml>=4.9.0",
+    "numpy>=1.21.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+fetch-pmc-xmls = "fetch_pmc_xmls:main"
+extract-coordinates = "extract_coordinates:main"
+extract-metadata = "extract_metadata:main"
+normalize-coordinates = "normalize_coordinates:main"
