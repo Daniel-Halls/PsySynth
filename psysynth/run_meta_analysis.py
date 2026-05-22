@@ -2,6 +2,7 @@
 import os
 import json
 import logging
+import argparse
 import numpy as np
 import scipy.stats as stats
 import nibabel as nib
@@ -12,10 +13,17 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def load_brain_mask():
     """Loads standard MNI152 brain mask and returns shape, affine, and data."""
     # Preferred path and fallback options
-    mask_paths = [
-        f"{os.environ['FSLDIR']}/data/standard/MNI152_T1_2mm_brain_mask.nii.gz",
-        f"{os.environ['FSLDIR']}/pkgs/fsl-data_standard-2208.0-0/data/standard/MNI152_T1_2mm_brain_mask.nii.gz"
-    ]
+    mask_paths = []
+    
+    fsldir = os.environ.get('FSLDIR')
+    if fsldir:
+        mask_paths.append(f"{fsldir}/data/standard/MNI152_T1_2mm_brain_mask.nii.gz")
+        mask_paths.append(f"{fsldir}/pkgs/fsl-data_standard-2208.0-0/data/standard/MNI152_T1_2mm_brain_mask.nii.gz")
+    
+    # Resolve the local path dynamically relative to the script's directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    local_mask_path = os.path.abspath(os.path.join(script_dir, "..", "data", "anorexia", "functional", "MNI152_T1_2mm_brain_mask.nii.gz"))
+    mask_paths.append(local_mask_path)
     
     mask_img = None
     for path in mask_paths:
@@ -61,7 +69,15 @@ def precompute_sphere_offsets(affine, radius_mm=10.0):
     
     return valid_offsets
 
-def run_meta_analysis():
+def run_meta_analysis(json_path, output_dir=None):
+    # Determine base name or prefix from the input JSON filename
+    base_name = os.path.basename(json_path)
+    prefix = os.path.splitext(base_name)[0]
+
+    if output_dir is None:
+        output_dir = os.path.dirname(os.path.abspath(json_path))
+    os.makedirs(output_dir, exist_ok=True)
+
     # 1. Standard Space Initialization
     shape, affine, mask_data = load_brain_mask()
     inv_affine = np.linalg.inv(affine)
@@ -70,7 +86,6 @@ def run_meta_analysis():
     sphere_offsets = precompute_sphere_offsets(affine, radius_mm=10.0)
     
     # Load input coordinates
-    json_path = "phase3_metadata.json"
     logging.info(f"Loading studies metadata from: {json_path}")
     with open(json_path, 'r') as f:
         studies = json.load(f)
@@ -151,7 +166,7 @@ def run_meta_analysis():
     posterior_mean = posterior_mean * mask_data
     
     # Export Posterior Mean Map
-    mean_filename = "posterior_mean_map.nii.gz"
+    mean_filename = os.path.join(output_dir, f"{prefix}_posterior_mean_map.nii.gz")
     logging.info(f"Saving Posterior Mean Map to: {mean_filename}")
     nib.save(nib.Nifti1Image(posterior_mean, affine), mean_filename)
         
@@ -160,7 +175,7 @@ def run_meta_analysis():
     logging.info(f"Calculating Exceedance Probability Map with fixed threshold tau = {tau:.2f}.")
     exceedance_prob = stats.beta.sf(tau, alpha_post, beta_post) * mask_data
     
-    output_filename = "exceedance_probability_map_sparsity_t15.nii.gz"
+    output_filename = os.path.join(output_dir, f"{prefix}_exceedance_probability_map_sparsity_t15.nii.gz")
     logging.info(f"Saving Exceedance Probability Map to: {output_filename}")
     out_img = nib.Nifti1Image(exceedance_prob, affine)
     nib.save(out_img, output_filename)
@@ -175,8 +190,8 @@ def run_meta_analysis():
     thresholded_mean = posterior_mean * decision_mask
     
     # Export thresholded maps
-    thresholded_exceedance_filename = "thresholded_exceedance_map.nii.gz"
-    thresholded_mean_filename = "thresholded_posterior_mean.nii.gz"
+    thresholded_exceedance_filename = os.path.join(output_dir, f"{prefix}_thresholded_exceedance_map.nii.gz")
+    thresholded_mean_filename = os.path.join(output_dir, f"{prefix}_thresholded_posterior_mean.nii.gz")
     logging.info(f"Saving thresholded maps to: {thresholded_exceedance_filename} and {thresholded_mean_filename}")
     nib.save(nib.Nifti1Image(thresholded_exceedance, affine), thresholded_exceedance_filename)
     nib.save(nib.Nifti1Image(thresholded_mean, affine), thresholded_mean_filename)
@@ -187,5 +202,22 @@ def run_meta_analysis():
     logging.info(f"Thresholded exceedance probability ranges from {thresholded_exceedance.min():.5f} to {thresholded_exceedance.max():.5f}.")
     logging.info(f"Thresholded posterior mean ranges from {thresholded_mean.min():.5f} to {thresholded_mean.max():.5f}.")
 
+def main():
+    parser = argparse.ArgumentParser(description="Run Bayesian meta-analysis on activation coordinates.")
+    parser.add_argument(
+        "--input", "-i",
+        type=str,
+        default="phase3_metadata.json",
+        help="Path to the input JSON file containing metadata (default: phase3_metadata.json)"
+    )
+    parser.add_argument(
+        "--output-dir", "-o",
+        type=str,
+        default=None,
+        help="Directory to save output maps (default: same directory as input file)"
+    )
+    args = parser.parse_args()
+    run_meta_analysis(args.input, args.output_dir)
+
 if __name__ == "__main__":
-    run_meta_analysis()
+    main()

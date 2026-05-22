@@ -40,8 +40,8 @@ def convert_tal_to_mni(x, y, z, transform_matrix):
     return round(mni_coord[0], 2), round(mni_coord[1], 2), round(mni_coord[2], 2)
 
 def main():
-    input_file = 'phase2_spatial_matrices.json'
-    output_file = 'phase2_spatial_matrices.json'
+    input_file = 'phase3_metadata.json'
+    output_file = 'phase3_metadata.json'
     
     if not os.path.exists(input_file):
         logging.error(f"Input file {input_file} not found. Please run Phase 2 first.")

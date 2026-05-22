@@ -16,6 +16,10 @@ dependencies = [
     "beautifulsoup4>=4.11.0",
     "lxml>=4.9.0",
     "numpy>=1.21.0",
+    "dash",
+    "plotly",
+    "scipy",
+    "nibabel",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +28,15 @@ dev = [
 ]
 
 [project.scripts]
-fetch-pmc-xmls = "fetch_pmc_xmls:main"
-extract-coordinates = "extract_coordinates:main"
-extract-metadata = "extract_metadata:main"
-normalize-coordinates = "normalize_coordinates:main"
+fetch-pmc-xmls = "psysynth.fetch_pmc_xmls:main"
+extract-coordinates = "psysynth.extract_coordinates:main"
+extract-metadata = "psysynth.extract_metadata:main"
+normalize-coordinates = "psysynth.normalize_coordinates:main"
+run-meta-analysis = "psysynth.run_meta_analysis:main"
+generate-modality-maps = "psysynth.generate_modality_maps:main"
+psysynth-dashboard = "psysynth.app:main"
+
+[tool.setuptools]
+packages = ["psysynth"]
+
+

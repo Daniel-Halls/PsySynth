@@ -38,13 +38,14 @@ def query_ollama(text, model="llama3"):
     Sends extracted text to a local Ollama instance to extract structured metadata.
     """
     system_prompt = (
-        "You are an expert neuroimaging data extractor. "
+               "You are an expert neuroimaging data extractor. "
         "Your task is to analyze the provided text and extract metadata. "
         "You MUST output ONLY a raw JSON object with absolutely no markdown formatting, no backticks, and no conversational filler. "
         "The JSON MUST contain exactly three keys:\n"
         "- \"sample_size\": an integer representing the total sample size (N) of the anorexia group. If unknown, output null.\n"
         "- \"modality\": a string (e.g., \"task-fMRI\", \"rs-fMRI\", \"VBM\"). If unknown, output null.\n"
-        "- \"contrast\": a string summarizing the main fMRI task contrast or finding. If unknown, output null."
+        "- \"type\": a string classifying the imaging type. It MUST be exactly \"structure\" (e.g., VBM, thickness, volume, gyrification, surface area, DTI, structural MRI), \"function\" (e.g., task-fMRI, rs-fMRI, BOLD, PET, SPECT, ReHo, ALFF, functional MRI), or \"unknown\". Do NOT output any other values for this key.\n"
+        "- \"contrast\": a string summarizing the main task contrast, structural comparison, or primary finding. If unknown, output null."
     )
 
     url = "http://localhost:11434/api/generate"
